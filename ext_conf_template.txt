@@ -1,0 +1,12 @@
+
+# cat=basic//01; type=boolean; label=Bots: Log bots (crawlers and spiders).
+logBots = 1
+
+# cat=basic//01; type=boolean; label=Avoid backend user logging: Trust BE user cookie and don't log this user
+disableBEUserLogging = 0
+
+# cat=basic//01; type=int [10-1000]; label=Refresh interval: In seconds
+refreshintervall = 180
+
+# cat=basic//01; type=string; label=Exclude pages: Exclude pages from logging. See documentation for more details
+exclude = 
