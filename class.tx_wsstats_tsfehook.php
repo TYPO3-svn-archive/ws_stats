@@ -134,14 +134,14 @@ class tx_wsstats_tsfehook {
     $data['hostname'] = $hostname;
     $data['agent'] = $GLOBALS['TYPO3_DB']->quoteStr($agent,'tx_wsstats_tracking');
     $data['searchphrase'] = $GLOBALS['TYPO3_DB']->quoteStr($se['phrase'],'tx_wsstats_tracking');
-    $data['searchpage '] = $searchpage;
-    $data['os '] = $os;
-    $data['browser '] = $GLOBALS['TYPO3_DB']->quoteStr($browser,'tx_wsstats_tracking');
-    $data['searchengine '] = $searchengine;
-    $data['cookiekey '] = $GLOBALS['TYPO3_DB']->quoteStr($cookie,'tx_wsstats_tracking');
-    $data['bot '] = $bot ? "1" : "0";
-    $data['feed '] = "";
-    $data['fe_user '] = "";
+    $data['searchpage'] = $searchpage;
+    $data['os'] = $os;
+    $data['browser'] = $GLOBALS['TYPO3_DB']->quoteStr($browser,'tx_wsstats_tracking');
+    $data['searchengine'] = $searchengine;
+    $data['cookiekey'] = $GLOBALS['TYPO3_DB']->quoteStr($cookie,'tx_wsstats_tracking');
+    $data['bot'] = $bot ? "1" : "0";
+    $data['feed'] = "";
+    $data['fe_user'] = "";
 
     if (intval($GLOBALS['TSFE']->fe_user->user['uid'])) $data['fe_user'] = intval($GLOBALS['TSFE']->fe_user->user['uid']);
 
