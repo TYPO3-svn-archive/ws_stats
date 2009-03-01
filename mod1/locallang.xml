@@ -17,7 +17,7 @@
             <label index="visits_for_cookie">Visits for cookie</label>
             <label index="refresh">Refresh</label>
             <label index="delete">Delete this record</label>
-            <label index="referrer">Referrer:</label>
+            <label index="referer">Referer:</label>
             <label index="hostname">Hostname:</label>
             <label index="visited">Visited %s times</label>
             <label index="search_engine">SEARCH ENGINE:</label>
@@ -51,6 +51,53 @@
             <label index="day">24 hours</label>
             <label index="week">7 days</label>
             <label index="month">30 days</label>
+		</languageKey>
+		<languageKey index="de" type="array">
+			<label index="title">Statistik</label>
+			<label index="function1">Function #1</label>
+			<label index="function2">Function #2</label>
+			<label index="function3">Function #3</label>
+            <label index="visitor_details">Besucherdetails</label>
+            <label index="maintenance">Wartung</label>
+            <label index="about">Über</label>
+            <label index="norecords">Keine Einträge vorhanden zur Zeit.</label>
+            <label index="visits_for_cookie">Besuche für Cookie</label>
+            <label index="refresh">Aktualisieren</label>
+            <label index="delete">Diesen Eintrag löschen</label>
+            <label index="referer">Referer:</label>
+            <label index="hostname">Hostname:</label>
+            <label index="visited">Besuchte %s mal</label>
+            <label index="search_engine">SEARCH ENGINE:</label>
+            <label index="page">Seite</label>
+            <label index="keywords">KEYWORDS:</label>
+            <label index="language">Language</label>
+            <label index="os">OS:</label>
+            <label index="browser">BROWSER:</label>
+            <label index="agent">AGENT:</label>
+            <label index="minutes_per_page">Minuten pro Seite:</label>
+            <label index="period">Intervall:</label>
+            <label index="range">Zeitraum:</label>
+            <label index="type">Typ:</label>
+            <label index="all">Alle</label>
+            <label index="human">Menschen</label>
+            <label index="bot">Bot</label>
+            <label index="pages">Seiten</label>
+            <label index="visitors">Besucher</label>
+            <label index="auto-refresh_1">Auto-Akualisierung in</label>
+            <label index="auto-refresh_2">Sekunden</label>
+            <label index="table_usage">Tabellen Auslastung</label>
+            <label index="unknown">unbekannt</label>
+            <label index="mb">MB</label>
+            <label index="rows">Rows:</label>
+            <label index="delete_bot_records">Lösche Bot Einträge</label>
+            <label index="author">Autor</label>
+            <label index="flag_icons">Flaggen Icons</label>
+            <label index="refresh">Refresh</label>
+            <label index="direct_hit">Direkter Zugriff</label>
+            <label index="from_your_website">Von deiner Website</label>
+            <label index="day">24 Stunden</label>
+            <label index="week">7 Tage</label>
+            <label index="month">30 Tage</label>
 		</languageKey>
 	</data>
 </T3locallang>

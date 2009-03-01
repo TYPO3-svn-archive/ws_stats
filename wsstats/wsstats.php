@@ -230,15 +230,15 @@ class wsstats {
     if ($firstreq['referrer'] != '') {
       if (!eregi($this->t3url, $firstreq['referrer']) || $firstreq['searchengine'] != "") {
         if (!eregi($this->t3url, $firstreq['referrer']) && $firstreq['searchengine'] == "") {
-          $referrer = '<a href="'.$firstreq['referrer'].'" target="_BLANK"><span style="font-weight: bold;">'.stringShortener($firstreq['referrer'], round($max_char_len*.8,0)).'</span></a>';
+          $referer = '<a href="'.$firstreq['referrer'].'" target="_BLANK"><span style="font-weight: bold;">'.stringShortener($firstreq['referrer'], round($max_char_len*.8,0)).'</span></a>';
         } else {
-          $referrer = '<a href="'.$firstreq['referrer'].'" target="_BLANK">'.stringShortener($firstreq['referrer'], round($max_char_len*.9,0)).'</a>';
+          $referer = '<a href="'.$firstreq['referrer'].'" target="_BLANK">'.stringShortener($firstreq['referrer'], round($max_char_len*.9,0)).'</a>';
         }
       } else {
-        $referrer = $LANG->getLL('from_your_website');
+        $referer = $LANG->getLL('from_your_website');
       }
     } else {
-      $referrer = $LANG->getLL('direct_hit');
+      $referer = $LANG->getLL('direct_hit');
     }
     $hostname = ($rk['hostname'] != "") ? $rk['hostname'] : $LANG->getLL('unknown');
 
@@ -256,7 +256,7 @@ class wsstats {
           <span class="sum-date">'.$datetimeF.'</span>
         </div>
         <div class="sum-det"><span class="det1"><a href="'.htmlspecialchars(html_entity_decode($firstreq['urlrequested'])).'" target="_blank">'.stringShortener(urlencode(html_entity_decode(($firstreq['urlrequested']))), round($max_char_len*.8,0)).'</a></span><br />
-          <span class="det2"><strong>'.$LANG->getLL('referrer').'</strong>'.$referrer.'<br /><strong>'.$LANG->getLL('hostname').'</strong> '.$hostname.'';
+          <span class="det2"><strong>'.$LANG->getLL('referer').'</strong>'.$referer.'<br /><strong>'.$LANG->getLL('hostname').'</strong> '.$hostname.'';
 
     if ($recurs > 1) {
         $visited_string = sprintf($LANG->getLL('visited'), $recurs);
@@ -568,8 +568,10 @@ class wsstats {
   
     $content = '';
 
-    $content .= '<h2>'.$LANG->getLL('author').'</h2>';
-    $content .= "<p>Sven Wappler, <a href=\"http://www.wapplersystems.de\" target=\"_blank\">WapplerSystems</a></p>";
+    $content .= '<h2>'.$LANG->getLL('authors').'</h2>';
+    $content .= "<p><ul><li><img src=\"../res/flags/de.png\" /> Sven Wappler, <a href=\"http://www.wapplersystems.de\" target=\"_blank\">WapplerSystems</a></li>
+    	<li><img src=\"../res/flags/fr.png\" /> Fedir Rykhtik, <a href=\"http://www.bleuroy.com/\" target=\"_blank\">BleuRoy.com</a></li></ul>
+    </p>";
 
     $content .= '<h2>'.$LANG->getLL('flag_icons').'</h2>';
     $content .= "<p>famfamfam.com</p>";

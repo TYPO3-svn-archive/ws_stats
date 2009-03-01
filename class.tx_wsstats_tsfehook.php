@@ -73,8 +73,8 @@ class tx_wsstats_tsfehook {
      $replace = array("","");
      $exclude = str_replace( $exclude);
      */
-    $referrer = t3lib_div::getIndpEnv('HTTP_REFERER');
-    $referrerData = parse_url($referrer);
+    $referer = t3lib_div::getIndpEnv('HTTP_REFERER');
+    $refererData = parse_url($referer);
     $ip = t3lib_div::getIndpEnv('REMOTE_ADDR');
     $language = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
     $agent = t3lib_div::getIndpEnv('HTTP_USER_AGENT');
@@ -86,11 +86,11 @@ class tx_wsstats_tsfehook {
     if ($bot && !$this->conf['logBots']) return;
 
 
-    $language = $this->getLocale($language,$hostname,$referrer);
+    $language = $this->getLocale($language,$hostname,$referer);
 
 
 
-    $se = $this->parseReferrer($referrer);
+    $se = $this->parseReferer($referer);
 
     $searchengine = $se['searchengine'];
     $searchpage = 0;
@@ -130,7 +130,7 @@ class tx_wsstats_tsfehook {
     $data['wsstats_id'] = $wsstats_id;
     $data['timestamp'] = $this->getTime();
     $data['language'] = $GLOBALS['TYPO3_DB']->quoteStr($language,'tx_wsstats_tracking');
-    $data['referrer'] = $GLOBALS['TYPO3_DB']->quoteStr($referrer,'tx_wsstats_tracking');
+    $data['referrer'] = $GLOBALS['TYPO3_DB']->quoteStr($referer,'tx_wsstats_tracking');
     $data['hostname'] = $hostname;
     $data['agent'] = $GLOBALS['TYPO3_DB']->quoteStr($agent,'tx_wsstats_tracking');
     $data['searchphrase'] = $GLOBALS['TYPO3_DB']->quoteStr($se['phrase'],'tx_wsstats_tracking');
@@ -199,7 +199,7 @@ class tx_wsstats_tsfehook {
   }
 
 
-  function getLocale($language="",$hostname="",$referrer="") {
+  function getLocale($language="",$hostname="",$referer="") {
     //#use country code for language, if it exists in hostname
     if (!empty($hostname) && preg_match("/\.[a-zA-Z]{2}$/", $hostname) > 0) {
       $country = strtolower(substr($hostname,-2));
@@ -210,11 +210,11 @@ class tx_wsstats_tsfehook {
       $langarray = @explode(",", count($langarray) > 1 ? $langarray[1] : $langarray[0]);
       list($language) = @explode(";", strtolower($langarray[0]));
     }
-    //#check referrer search string for language/locale code, if any
-    if ((empty($language) || $language == "us" || $language == "en") && !empty($referrer)) {
+    //#check referer search string for language/locale code, if any
+    if ((empty($language) || $language == "us" || $language == "en") && !empty($referer)) {
       $country = $language;
-      // google referrer syntax: google.com[.country],hl=language
-      if (preg_match('/\.google(\.com)?\.(com|([a-z]{2}))?\/.*[&?]hl\=(\w{2})\-?(\w{2})?/',$referrer,$matches)>0) {
+      // google referer syntax: google.com[.country],hl=language
+      if (preg_match('/\.google(\.com)?\.(com|([a-z]{2}))?\/.*[&?]hl\=(\w{2})\-?(\w{2})?/',$referer,$matches)>0) {
         if (!empty($matches[5])) {
           $country = strtolower($matches[5]);
         } elseif (!empty($matches[3])) {
@@ -280,7 +280,7 @@ class tx_wsstats_tsfehook {
     return (preg_match('/(\.|)(googlebot|live|msn|yahoo|technorati|ayell|alexa|bigfinder|scoutjet|netluchs|ask)\.(com|net|org|de)$/i',$hostname) > 0);
   }
 
-  function parseSearchengineAndSearchphrase($referrer = null){
+  function parseSearchengineAndSearchphrase($referer = null){
     $key = null;
     $lines = array("Alice|search.alice.it|qs|", "Google|www.google.|as_q|", "Google|www.google.|q|", "Google Groups|groups.google.|q|",
                         "Google Images|images.google.|prev|", "Yahoo|search.yahoo.com|p|", "Google Blog|blogsearch.google.|as_q|", "Google Blog|blogsearch.google.|q|",
@@ -299,9 +299,9 @@ class tx_wsstats_tsfehook {
                         "T-Online|suche.t-online.de|q|");
     foreach ($lines as $line_num => $se) {
       list ($name,$url,$key,$lang) = explode("|",$se);
-      if (@strpos($referrer,$url) === false) continue;
+      if (@strpos($referer,$url) === false) continue;
       // found it!
-      $variables = $this->explodeQuery($referrer);
+      $variables = $this->explodeQuery($referer);
       // The SE is Google Images
       if ($name == "Google Images") {
         $rightkey = array_search_extended($variables, "images");
@@ -319,7 +319,7 @@ class tx_wsstats_tsfehook {
     return array();
   }
 
-  function parseReferrer($ref = false) {
+  function parseReferer($ref = false) {
     $page = 0;
 
     $se = $this->parseSearchengineAndSearchphrase($ref);
