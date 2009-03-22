@@ -134,10 +134,10 @@ class tx_wsstats_tsfehook {
     $data['hostname'] = $hostname;
     $data['agent'] = $GLOBALS['TYPO3_DB']->quoteStr($agent,'tx_wsstats_tracking');
     $data['searchphrase'] = $GLOBALS['TYPO3_DB']->quoteStr($se['phrase'],'tx_wsstats_tracking');
-    $data['searchpage'] = $searchpage;
-    $data['os'] = $os;
+    $data['searchpage'] = $GLOBALS['TYPO3_DB']->quoteStr($searchpage,'tx_wsstats_tracking');
+    $data['os'] = $GLOBALS['TYPO3_DB']->quoteStr($os,'tx_wsstats_tracking');
     $data['browser'] = $GLOBALS['TYPO3_DB']->quoteStr($browser,'tx_wsstats_tracking');
-    $data['searchengine'] = $searchengine;
+    $data['searchengine'] = $GLOBALS['TYPO3_DB']->quoteStr($searchengine,'tx_wsstats_tracking');;
     $data['cookiekey'] = $GLOBALS['TYPO3_DB']->quoteStr($cookie,'tx_wsstats_tracking');
     $data['bot'] = $bot ? "1" : "0";
     $data['feed'] = "";
@@ -184,9 +184,8 @@ class tx_wsstats_tsfehook {
 
     //use Detector class when browscap is missing or browser is unknown
     if ($os == "" || $browser == "") {
-      $dip = new Detector("", $agent);
-      $browser =  trim($dip->browser." ".$dip->browser_version);
-      $os = trim($dip->os." ".$dip->os_version);
+      $browser =  Wsstats_Detector::check_browser($agent);
+      $os = Wsstats_Detector::check_os($agent);
 
       //use saved browscap data, if Detector had no results
       if (!empty($browscapbrowser) && ($browser == "" || $browser == "N/A")) {

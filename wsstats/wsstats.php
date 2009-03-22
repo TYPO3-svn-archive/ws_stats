@@ -180,7 +180,7 @@ class wsstats {
     
     $content = '<ul id="menubar"><li><a class="button" href="?mod=cookie&key='.$key.'">'.$LANG->getLL('refresh').'</a></li></ul>';
     
-    $main = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("DISTINCT wsstats_id, ip, hostname, cookiekey, agent",$this->table_name,"cookiekey = \"".$key."\"","","timestamp DESC");
+    $main = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("DISTINCT wsstats_id, ip, hostname, cookiekey, agent",$this->table_name,"cookiekey = ".$GLOBALS['TYPO3_DB']->fullQuoteStr($key,$this->table_name)."","","timestamp DESC");
 
     $params = isset($_GET['wsstats']) ? $_GET['wsstats'] : array();
 
