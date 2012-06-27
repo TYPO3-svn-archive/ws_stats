@@ -10,6 +10,7 @@
 CREATE TABLE tx_wsstats_tracking (
   id int(11) NOT NULL auto_increment,
   wsstats_id varchar(50) default '',
+  domain varchar(50) default '',
   timestamp varchar(20) default '',
   ip varchar(35) default '',
   hostname varchar(255) default '',

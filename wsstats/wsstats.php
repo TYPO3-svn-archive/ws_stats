@@ -39,9 +39,9 @@ class wsstats {
   }
 
   function menu() {
-    
+
     global $LANG;
-    
+
     $mods = Array('visitors' => $LANG->getLL('visitor_details'),'maintenance' => $LANG->getLL('maintenance'),'about' => $LANG->getLL('about'));
 
     $cm = '';
@@ -89,9 +89,9 @@ class wsstats {
   }
 
   function page_visitordetails() {
-    
+
     global $LANG;
-    
+
     $content = '';
 
     $cookies = isset($_COOKIE['wsstats']) ? $_COOKIE['wsstats'] : array();
@@ -101,8 +101,10 @@ class wsstats {
 
     $range = isset($params['range']) ? intval($params['range']) : (isset($cookies['range']) ? $cookies['range'] : 1);
     $items = isset($params['limit']) ? intval($params['limit']) : 10;
+    $domain = isset($params['domain']) ? $params['domain'] : (isset($cookies['domain']) ? $cookies['domain'] : "");
+
     $page = isset($params['page']) ? intval($params['page']) : 1;
-    if (isset($params['page'])) unset($params['page']);
+    //if (isset($params['page'])) unset($params['page']);
     $limit = ($page > 1) ? (($page-1)*$items).",$items" : $items;
     $search = isset($params['search']) ? $params['search'] : "";
     $sortby = null;
@@ -110,6 +112,8 @@ class wsstats {
 
     setcookie ("wsstats[visitortype]", $visitortype);
     setcookie ("wsstats[range]", $range);
+    setcookie ("wsstats[domain]", $domain);
+
 
     $to_date = $this->getTime();
     $to_date = mktime(date("G"), 0, 0, date("m")  , date("d"), date("Y"));
@@ -118,6 +122,8 @@ class wsstats {
 
     $where = "timestamp BETWEEN ".$from_date." AND ".$to_date."";
     $where .= (($visitortype == "all") ? "" : (($visitortype == "human") ? " AND bot = 0" : " AND bot = 1"));
+    $where .= ($domain != "") ? " AND domain = '".$domain."'" : "";
+
 
     $acitems = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("COUNT(DISTINCT wsstats_id) as num_items",$this->table_name,$where);
     $num_items = $acitems[0]['num_items'];
@@ -127,14 +133,14 @@ class wsstats {
 
     $this->addPageheaderJS($params);
 
-    $content .= $this->createMenubar($range,$sortby,$params,$visitortype);
+    $content .= $this->createMenubar($range,$sortby,$params,$visitortype,$domain);
 
     $content .= $this->createChart($where,$from_date,$to_date,$range);
 
     $content .= $this->getSummary($num_items,$num_pages);
 
 
-    $main = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("wsstats_id, ip, hostname, cookiekey, agent",$this->table_name,$where,"wsstats_id","timestamp DESC",$limit);
+    $main = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("wsstats_id, ip, hostname, domain, cookiekey, agent",$this->table_name,$where,"wsstats_id","timestamp DESC",$limit);
 
 
     if ($num_items > 0) {
@@ -171,15 +177,15 @@ class wsstats {
   }
 
   function page_cookie() {
-  
+
     global $LANG;
-     
+
     $key = $_GET['key'];
 
     $content = '<h2 style="margin-bottom: 2em;">'.$LANG->getLL('visits_for_cookie').' "'.$key.'"</h2>';
-    
+
     $content = '<ul id="menubar"><li><a class="button" href="?mod=cookie&key='.$key.'">'.$LANG->getLL('refresh').'</a></li></ul>';
-    
+
     $main = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("DISTINCT wsstats_id, ip, hostname, cookiekey, agent",$this->table_name,"cookiekey = ".$GLOBALS['TYPO3_DB']->fullQuoteStr($key,$this->table_name)."","","timestamp DESC");
 
     $params = isset($_GET['wsstats']) ? $_GET['wsstats'] : array();
@@ -193,23 +199,33 @@ class wsstats {
   }
 
   function createListItem($rk,$params) {
-    
+
     global $LANG;
-    
+
     $content = '';
 
     $max_char_len = 70;
 
-    $reqs = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("id, timestamp, urlrequested, referrer, searchphrase, searchpage, os, browser, language, agent, searchengine, bot, feed, fe_user",$this->table_name,"wsstats_id = '".$rk['wsstats_id']."'","","timestamp ASC");
+    $reqs = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("id, timestamp, domain, urlrequested, referrer, searchphrase, searchpage, os, browser, language, agent, searchengine, bot, feed, fe_user",$this->table_name,"wsstats_id = '".$rk['wsstats_id']."'","","timestamp ASC");
 
     if (strlen($rk['cookiekey']) > 0) {
-      $a_recurs = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("COUNT(DISTINCT wsstats_id) as num_recurs",$this->table_name,"cookiekey = \"".$rk['cookiekey']."\"");
+      $a_recurs = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("COUNT(DISTINCT wsstats_id) as num_recurs",$this->table_name,"cookiekey = ".$GLOBALS['TYPO3_DB']->fullQuoteStr($rk['cookiekey'],$this->table_name));
 
       $recurs = $a_recurs[0]['num_recurs'];
     } else $recurs = 0;
 
     $firstreq = $reqs[0];
     $lastreq = $reqs[count($reqs)-1];
+
+
+    $referer = htmlspecialchars($firstreq['referrer']);
+    $os = htmlspecialchars($firstreq['os']);
+    $cookiekey = htmlspecialchars($rk['cookiekey']);
+    $agent = htmlspecialchars($firstreq['agent']);
+    $browser = htmlspecialchars($firstreq['browser']);
+    $language = htmlspecialchars($firstreq['language']);
+    $domain = htmlspecialchars($firstreq['domain']);
+
 
     $timestampF = $firstreq['timestamp'];
     $dateF = date("d M Y", $timestampF);
@@ -227,12 +243,12 @@ class wsstats {
     }
 
     //Visitor Record - detail listing
-    if ($firstreq['referrer'] != '') {
-      if (!eregi($this->t3url, $firstreq['referrer']) || $firstreq['searchengine'] != "") {
-        if (!eregi($this->t3url, $firstreq['referrer']) && $firstreq['searchengine'] == "") {
-          $referer = '<a href="'.$firstreq['referrer'].'" target="_BLANK"><span style="font-weight: bold;">'.stringShortener($firstreq['referrer'], round($max_char_len*.8,0)).'</span></a>';
+    if ($referer != '') {
+      if (!preg_match("/".$this->t3url."/i", $referer) || $firstreq['searchengine'] != "") {
+        if (!preg_match("/".$this->t3url."/i", $referer) && $firstreq['searchengine'] == "") {
+          $referrer = '<a href="'.$referer.'" target="_BLANK"><span style="font-weight: bold;">'.stringShortener($referer, round($max_char_len*.8,0)).'</span></a>';
         } else {
-          $referer = '<a href="'.$firstreq['referrer'].'" target="_BLANK">'.stringShortener($firstreq['referrer'], round($max_char_len*.9,0)).'</a>';
+          $referrer = '<a href="'.$referer.'" target="_BLANK">'.stringShortener($referer, round($max_char_len*.9,0)).'</a>';
         }
       } else {
         $referer = $LANG->getLL('from_your_website');
@@ -248,39 +264,38 @@ class wsstats {
 
         <p class="delbut">';
     $content .= '<a href="?mod=visitors&action=deleterecord&wsstatsid='.$rk['wsstats_id'].'&'.$this->paramsToString($params).'" class="deleteID" id="'.$rk['wsstats_id'] .'" style="text-decoration:none;">
-        <img src="../res/cross.png" alt="delete" title="'.$LANG->getLL('delete').'" /></a>';
-
-    $content .= '</p>
-		<div style="float: left">
+        <img src="../res/cross.png" alt="delete" title="'.$LANG->getLL('delete').'" /></a>
+        </p>
+        <div style="float: left">
           <span class="sum-box"><a href="http://www.geoip.co.uk/?IP='.$ip.'" target="_blank">'.$ip.'</a></span>
           <span class="sum-date">'.$datetimeF.'</span>
         </div>
-        <div class="sum-det"><span class="det1"><a href="'.htmlspecialchars(html_entity_decode($firstreq['urlrequested'])).'" target="_blank">'.stringShortener(urlencode(html_entity_decode(($firstreq['urlrequested']))), round($max_char_len*.8,0)).'</a></span><br />
+        <div class="sum-det"><span class="det1"><a href="http://'.htmlspecialchars(html_entity_decode($firstreq['domain'].$firstreq['urlrequested'])).'" target="_blank">'.stringShortener(urlencode(html_entity_decode(($firstreq['urlrequested']))), round($max_char_len*.8,0)).'</a></span><br />
           <span class="det2"><strong>'.$LANG->getLL('referer').'</strong>'.$referer.'<br /><strong>'.$LANG->getLL('hostname').'</strong> '.$hostname.'';
 
     if ($recurs > 1) {
         $visited_string = sprintf($LANG->getLL('visited'), $recurs);
-        $content .= ', <a href="?mod=cookie&key='.$rk['cookiekey'].'">'.$visited_string.'</a>';
+        $content .= ', <a href="?mod=cookie&key='.$cookiekey.'">'.$visited_string.'</a>';
     }
 
     $content .= '</span>
-		</div>
-		</div>
-		<div class="information">';
+        </div>
+    </div>
+    <div class="information">';
 
     // Referer is search engine
     if ($firstreq['searchengine'] != "") {
-      if (eregi("images", $firstreq['searchengine'])) {
+      if (preg_match("/images/i", $firstreq['searchengine'])) {
         $class = 'images';
         $page = (number_format(($firstreq['searchpage'] / 19), 0) * 18);
         $Apagenum = explode(".", number_format(($firstreq['searchpage'] / 19), 1));
         $pagenum = ($Apagenum[0] + 1);
-        $url = parse_url($firstreq['referrer']);
-        $ref = $url['scheme']."://".$url['host']."/images?q=".eregi_replace(" ", "+", $firstreq['searchphrase'])."&start=".$page;
+        $url = parse_url($referer);
+        $ref = $url['scheme']."://".$url['host']."/images?q=".preg_replace("/ /", "+", $firstreq['searchphrase'])."&start=".$page;
       } else {
         $class = '';
         $pagenum = $firstreq['searchpage'];
-        $ref = $firstreq['referrer'];
+        $ref = $referer;
       }
 
       $content .= '<ul class="searchengine '.$class.'">
@@ -291,16 +306,16 @@ class wsstats {
 
 
     // User os/browser/language
-    if ($firstreq['bot'] == 0 && ($firstreq['os'] != "" || $firstreq['browser'] != "")) {
+    if ($firstreq['bot'] == 0 && ($os != "" || $browser != "")) {
 
       $content .= '<ul class="agent"><li><span>';
-       
-      if (eregi('^[a-z]{2}$',$firstreq['language'], $vars)) {
-        $content .= '<img src="../res/flags/'.strtolower($firstreq['language']).'.png" alt="'.strtolower($firstreq['language']).'" title="'.$LANG->getLL('language').': '.strtolower($firstreq['language']).'" />';
+
+      if (preg_match('/^[a-z]{2}$/',$language, $vars)) {
+        $content .= '<img src="../res/flags/'.strtolower($language).'.png" alt="'.strtolower($language).'" title="'.$LANG->getLL('language').': '.strtolower($language).'" />';
       }
-      $content .=  $LANG->getLL('os').'<strong>'. $firstreq['os'].'</strong></span></li><li>'.$LANG->getLL('browser').'<strong> '.$firstreq['browser'].'</strong></li>';
-       
-      $content .= '<li>'.$LANG->getLL('agent').'<img src="../res/info.png" title="'.$firstreq['agent'].'" /></li>';
+      $content .= $LANG->getLL('os').'<strong>'. $os.'</strong></span></li><li>'.$LANG->getLL('browser').'<strong> '.$browser.'</strong></li>';
+
+      $content .= '<li>'.$LANG->getLL('agent').'<img src="../res/info.png" title="'.$agent.'" /></li>';
       if (count($reqs) > 1) {
         $content .= '<li>'.$LANG->getLL('minutes_per_page').'<b>'. (round($period/60) > 0 ? ( round( ($period / 60) / count($reqs) * 100) / 100 ) : "0") . '</b></li>';
         $content .= '<li>'.$LANG->getLL('period').'<b>'.time_left_to_string($period).'</b></li>';
@@ -311,9 +326,9 @@ class wsstats {
     if ($firstreq['bot'] == 1) {
 
       $content .= '<ul class="bot"><li><span>';
-       
-      $content .= '<li>'.$firstreq['agent'].'</li>';
-       
+
+      $content .= '<li>'.$agent.'</li>';
+
       $content .= '</ul>';
     }
 
@@ -337,9 +352,9 @@ class wsstats {
 
 
   function createOtherView($cd) {
-    
+
     global $LANG;
-    
+
     $content = '';
     $max_char_len = 70;
 
@@ -347,7 +362,7 @@ class wsstats {
     $char_len = round($max_char_len*.92,0);
 
     $content .= '<li class="navi'.$cd['id'].'"><span class="indent-li-nav">'.$time2.' -> ';
-    $content .= '<a href="'.htmlspecialchars(html_entity_decode($cd['urlrequested'])).'" target="_BLANK">';
+    $content .= '<a href="http://'.htmlspecialchars(html_entity_decode($cd['domain'].$cd['urlrequested'])).'" target="_BLANK">';
     $content .= stringShortener(urlencode(html_entity_decode($cd['urlrequested'])), $char_len).'</a></span></li>'."\n";
 
     return $content;
@@ -357,10 +372,10 @@ class wsstats {
     return date("U");
   }
 
-  function createMenubar($range,$sortby,$params,$visitortype) {
-  
+  function createMenubar($range,$sortby,$params,$visitortype,$domain = "") {
+
     global $LANG;
-    
+
     $s = '<ul id="menubar">';
     $s .= '<li><label for="range">'.$LANG->getLL('range').'</label>';
     $s .= '<select onchange="window.location.href=this.options[this.selectedIndex].value;" name="range">';
@@ -385,12 +400,27 @@ class wsstats {
     $s .= '<li><a class="button" href="?mod=visitors&'.$this->paramsToString($params).'">'.$LANG->getLL('refresh').'</a></li>';
 
 
+    $s .= '<li><label for="domain">'.$LANG->getLL('domain').'</label>';
+    $s .= '<select onchange="window.location.href=this.options[this.selectedIndex].value;" name="domain">';
+
+
+    $domains = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows("domain",$this->table_name,"","domain","");
+
+    $aranges = array("" => $LANG->getLL('all'));
+    foreach ($domains as $adomain) {
+      if ($adomain['domain'] != "") $aranges[$adomain['domain']] = $adomain['domain'];
+    }
+
+    foreach ($aranges as $key => $val) $s .= '<option value="?mod=visitors&'.$this->paramsToString($params,"domain",$key).'" '.(($domain == $key) ? 'selected="selected"' : '' ).'>'.$val.'</option>';
+    $s .= '</select></li>';
+
+
     $s .= '</ul>';
     return $s;
   }
 
   function createChart($where,$from_date,$to_date,$range) {
-  
+
     global $LANG;
 
     $data1 = $data2 = $ticks = "";
@@ -411,7 +441,7 @@ class wsstats {
         $visitors = $pages = $hours;
         //print_r($reqs);
         foreach ($reqs as $req) {
-           
+
           $h = mktime(intval(date("G",$req['thedate']))+1, 0, 0, intval(date("n",$req['thedate'])), intval(date("j",$req['thedate'])), intval(date("Y",$req['thedate'])))-(60*30);
           //echo $h."-".$req['items']."-".$req['pages']." ".date("H:i:s",$req['thedate'])."\n";
           $visitors[$h] = $req['items'];
@@ -522,9 +552,9 @@ class wsstats {
   }
 
   function getSummary($visitors, $pages) {
-    
+
     global $LANG;
-    
+
     $s = "";
 
     $s .= '<div id="summary" class="clearfix"><div class="fl visitors"><span>'.$LANG->getLL('visitors').': '.$visitors.'</span></div><div class="fl pages"><span>'.$LANG->getLL('pages').': '.$pages.'</span></div><div class="fl"><span>'.$LANG->getLL('auto-refresh_1').'&nbsp;</span><span id="countdown"></span><span>&nbsp;'.$LANG->getLL('auto-refresh_2').'</span></div></div>';
@@ -533,16 +563,16 @@ class wsstats {
   }
 
   function page_maintenance() {
-    
+
     global $LANG;
-    
+
     $content = '';
     $content .= '<h1>'.$LANG->getLL('table_usage').'</h1><p>';
 
     $res = mysql_query("SHOW TABLE STATUS LIKE '".$this->table_name."'",$GLOBALS['TYPO3_DB']->link);
 
     $output = array();
-    while($tempRow = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res))	{
+    while($tempRow = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
       $output[] = $tempRow;
     }
 
@@ -551,7 +581,7 @@ class wsstats {
       $data_rows = $fstatus['Rows'];
       $table_engine = (isset($fstatus['Engine'])? $fstatus['Engine']: $LANG->getLL('unknown'));
     }
-    
+
     $tusage = number_format(($data_lenght/1024/1024), 2, ",", " ");
     $content .= $tusage.$LANG->getLL('mb').'<br />';
     $content .= $LANG->getLL('rows').$data_rows."<br /></p>";
@@ -563,15 +593,16 @@ class wsstats {
 
 
   function page_about() {
-  
+
     global $LANG;
-  
+
     $content = '';
 
     $content .= '<h2>'.$LANG->getLL('authors').'</h2>';
-    $content .= "<p><ul><li><img src=\"../res/flags/de.png\" /> Sven Wappler, <a href=\"http://www.wapplersystems.de\" target=\"_blank\">WapplerSystems</a></li>
-    	<li><img src=\"../res/flags/fr.png\" /> Fedir Rykhtik, <a href=\"http://www.bleuroy.com/\" target=\"_blank\">BleuRoy.com</a></li></ul>
-    </p>";
+    $content .= "
+    <p><ul>
+        <li><img src=\"../res/flags/de.png\" /> Sven Wappler, <a href=\"http://www.wapplersystems.de\" target=\"_blank\">WapplerSystems</a></li>
+    </ul></p>";
 
     $content .= '<h2>'.$LANG->getLL('flag_icons').'</h2>';
     $content .= "<p>famfamfam.com</p>";
@@ -592,7 +623,7 @@ class wsstats {
   setTimeout("selfRefresh()", <?php echo intval($this->conf['refreshintervall'])*1000 ?>);
   var _countDowncontainer = null;
   var _currentSeconds = 0;
-  
+
   function activate_countdown(container, initialValue) {
   	_countDowncontainer = container;
   	SetCountdownText(initialValue);

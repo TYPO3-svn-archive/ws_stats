@@ -5,8 +5,11 @@ logBots = 1
 # cat=basic//01; type=boolean; label=Avoid backend user logging: Trust BE user cookie and don't log this user
 disableBEUserLogging = 0
 
-# cat=basic//01; type=int [10-1000]; label=Refresh interval: In seconds
+# cat=basic//02; type=int [10-1000]; label=Refresh interval: In seconds
 refreshintervall = 180
 
-# cat=basic//01; type=string; label=Exclude pages: Exclude pages from logging. See documentation for more details
+# cat=basic//03; type=string; label=Exclude pages: Exclude pages from logging. See documentation for more details
 exclude = 
+
+# cat=basic//04; type=string; label=Exclude IPs: Exclude ips from logging. See documentation for more details
+excludeIPs = 

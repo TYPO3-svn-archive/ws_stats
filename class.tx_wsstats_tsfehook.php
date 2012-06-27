@@ -26,7 +26,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-require_once('wsstats/main.php');
+require_once t3lib_extMgm::extPath('ws_stats', 'wsstats/main.php');
 
 class tx_wsstats_tsfehook {
   var $extkey = "ws_stats";
@@ -78,10 +78,22 @@ class tx_wsstats_tsfehook {
     $ip = t3lib_div::getIndpEnv('REMOTE_ADDR');
     $language = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
     $agent = t3lib_div::getIndpEnv('HTTP_USER_AGENT');
+    $domain = t3lib_div::getIndpEnv('HTTP_HOST');
     $search_phrase = "";
     list($browser,$os) = $this->getBrowser($agent);
     list($hostname,$ip) = $this->getHostnameAndIP();
-
+    
+    
+    // exclude ips
+    $excludeips = $this->conf['excludeIPs'];
+    
+    $aeips = explode(";",$excludeips);
+    
+    foreach ($aeips as $eip) {
+        if ($eip != "" && preg_match('/^'.$eip.'/', $ip)) return;
+    }
+    
+    // exclude bots
     $bot = $this->isBot($hostname,$agent,$ip);
     if ($bot && !$this->conf['logBots']) return;
 
@@ -131,6 +143,7 @@ class tx_wsstats_tsfehook {
     $data['timestamp'] = $this->getTime();
     $data['language'] = $GLOBALS['TYPO3_DB']->quoteStr($language,'tx_wsstats_tracking');
     $data['referrer'] = $GLOBALS['TYPO3_DB']->quoteStr($referer,'tx_wsstats_tracking');
+    $data['domain'] = $GLOBALS['TYPO3_DB']->quoteStr($domain,'tx_wsstats_tracking');
     $data['hostname'] = $hostname;
     $data['agent'] = $GLOBALS['TYPO3_DB']->quoteStr($agent,'tx_wsstats_tracking');
     $data['searchphrase'] = $GLOBALS['TYPO3_DB']->quoteStr($se['phrase'],'tx_wsstats_tracking');
@@ -267,7 +280,7 @@ class tx_wsstats_tsfehook {
     if (preg_match('/(bot|crawler|spider|java|findlinks|libwww-perl)/i',$agent) > 0) return true;
     
     // Filter search-fake of windows live bot
-    $aip = split("\.",$ip);
+    $aip = explode(".",$ip);
     if ($aip[0] == "65" && $aip[1] == "55") return true;
 
     return false;
@@ -276,7 +289,7 @@ class tx_wsstats_tsfehook {
   function isCrawler($hostname) {
     if ($hostname == "") return false;
 
-    return (preg_match('/(\.|)(googlebot|live|msn|yahoo|technorati|ayell|alexa|bigfinder|scoutjet|netluchs|ask)\.(com|net|org|de)$/i',$hostname) > 0);
+    return (preg_match('/(\.|)(googlebot|live|msn|yahoo|technorati|ayell|alexa|bigfinder|scoutjet|netluchs|ask|amazonaws)\.(com|net|org|de)$/i',$hostname) > 0);
   }
 
   function parseSearchengineAndSearchphrase($referer = null){
@@ -295,7 +308,7 @@ class tx_wsstats_tsfehook {
                         "Jumpy|servizi.mediaset.it|searchWord|","ItaliaPuntoNet|italiapuntonet.net|search|","StartNow|search.startnow.|q|","Search|search.it|srctxt|",
                         "Search|search.com|q|", "Good Search|goodsearch.com|Keywords|", "ABC Sok|verden.abcsok.no|q|", "Kvasir|kvasir.no|searchExpr|",
                         "Start.no|start.no|q|", "bluewin.ch|bluewin.ch|query|", "Google Translate|translate.google.|u|","Metager|metager.de|eingabe|","ICQ Search|search.icq.com|q|",
-                        "T-Online|suche.t-online.de|q|");
+                        "T-Online|suche.t-online.de|q|","Bing|bing.com|q|");
     foreach ($lines as $line_num => $se) {
       list ($name,$url,$key,$lang) = explode("|",$se);
       if (@strpos($referer,$url) === false) continue;
@@ -304,7 +317,7 @@ class tx_wsstats_tsfehook {
       // The SE is Google Images
       if ($name == "Google Images") {
         $rightkey = array_search_extended($variables, "images");
-        $variables = eregi_replace("prev=/images\?q=", "", urldecode($variables[$rightkey]));
+        $variables = preg_replace("/prev=\/images\?q=/", "", urldecode($variables[$rightkey]));
         $variables = explode("&",$variables);
         return array("name" => $name, "phrase" => urldecode($variables[0]));
       } else {
